@@ -1,15 +1,21 @@
-import React from 'react';
+import React, {Fragment} from 'react';
 import axios from 'axios';
 
 import '../styles/application.scss';
+import noImage from '../images/no-image-icon.png';
 
 class IndexPage extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            redditResults: null
+            redditResults: null,
+						searchVal: '',
+						filteredResults: null
         };
+				
+				//Bind events
+				this.searchSuggest = this.searchSuggest.bind(this);
     }
 
     /**
@@ -38,26 +44,69 @@ class IndexPage extends React.Component {
             console.log(error);
         });
     }
-
+		
+		
+		
+		searchSuggest(e){
+			this.setState({
+				searchVal: e.target.value
+			});
+		}
+		
+		
+		
     render() {
-        const { redditResults } = this.state;
+        const { redditResults, searchVal } = this.state;
+				//Filter Results
+				let filteredResults = null;
+				if(redditResults !== null){
+					 filteredResults = redditResults.filter((result) => {
+						return result.title.toLowerCase().indexOf(searchVal.toLowerCase()) !== -1;
+					});
+				}
+				
+				if(redditResults === null){
+					return (
+						<section className="loading-section">
+							Loading results.....
+						</section>
+					);
+				}
+				
         return (
+					<Fragment>
+						<header>
+							<div className="search-header">
+								<h4>Search:</h4>
+								<input 
+									type="text" 
+									name="search" 
+									id="search" 
+									placeholder="Begin typing to search"
+									onKeyUp={this.searchSuggest}
+								/>
+							</div>
+						</header>
             <section>
-                <h4>Search</h4>
-                <input type="text" name="search" id="search" />
-                {redditResults ? (
-                    <ul>
-                        {redditResults.map(result => (
-                            <li key={result.thumbnail}>
-                                <a href={result.url}>
-                                    <strong>{result.title}</strong>
-                                    <img src={result.thumbnail} alt={result.title}/>
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                ) : ''}
+									<h4 className="results-header">Science Results</h4>
+	                {filteredResults.length ? (
+	                    <ul className="reddit-panel-container">
+	                        {filteredResults.map((result, index) => (
+	                            <li className="reddit-panel" key={index}>
+	                                <a href={result.url}>
+	                                    <strong>{result.title}</strong>
+	                                    <img src={result.thumbnail} alt={result.title} onError={(e) => {e.target.src=noImage; }}/>
+	                                </a>
+	                            </li>
+	                        ))}
+	                    </ul>
+	                ) : 
+									<h4 className="empty-results">
+										Sorry, there were no results for "<strong>{searchVal}</strong>"
+									</h4>
+								}
             </section>
+					</Fragment>
         );
     }
 }
